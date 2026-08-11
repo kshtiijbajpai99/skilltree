@@ -134,6 +134,10 @@ This makes the graph structure directly express the learning rules.
 
 #### Skill
 
+![Skilltree Graph Data Model](docs/data-model.png)
+
+The graph consists of Skill and Course nodes connected through PREREQUISITE_OF, TEACHES, and REQUIRES relationships.
+
 ```text
 Skill {
     id,
