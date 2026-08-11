@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skilltree — plot your path through any skill</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />  <script src="lib/vis-network.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>Skilltree</h1>
+          <p class="tagline">A map of what to learn, and what it unlocks</p>
+        </div>
+      </div>
+      <div class="topbar-status" id="connection-status">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">Connecting…</span>
+      </div>
+    </header>
+
+    <div class="layout">
+
+      <aside class="sidebar">
+
+        <section class="panel">
+          <h2>1. What do you already know?</h2>
+          <p class="panel-hint">Search and add skills you're confident in.</p>
+          <div class="autocomplete" id="known-autocomplete">
+            <input type="text" id="known-search" placeholder="Search skills… e.g. Python, SQL" autocomplete="off" />
+            <div class="autocomplete-list" id="known-suggestions" hidden></div>
+          </div>
+          <div class="chip-row" id="known-chips" aria-live="polite"></div>
+        </section>
+
+        <section class="panel">
+          <h2>2. What do you want to learn?</h2>
+          <select id="target-select">
+            <option value="">Choose a target skill…</option>
+          </select>
+          <button id="find-path-btn" class="btn-primary" disabled>Plot my path</button>
+        </section>
+
+        <section class="panel" id="next-panel">
+          <h2>Ready to learn right now</h2>
+          <p class="panel-hint">Skills with every prerequisite already checked off.</p>
+          <div id="next-list" class="next-list">
+            <p class="empty-note">Add a few known skills to see what unlocks.</p>
+          </div>
+        </section>
+
+      </aside>
+
+      <main class="canvas-area">
+        <div class="legend">
+          <span><i class="swatch known"></i> Known</span>
+          <span><i class="swatch learnable"></i> Ready to learn</span>
+          <span><i class="swatch locked"></i> Locked</span>
+          <span><i class="swatch target"></i> Target</span>
+        </div>
+        <div id="graph-canvas"></div>
+        <div id="graph-loading" class="overlay">
+          <div class="spinner"></div>
+          <p>Loading the skill map…</p>
+        </div>
+        <div id="graph-error" class="overlay" hidden>
+          <p class="error-title">Couldn't reach the graph</p>
+          <p class="error-body" id="graph-error-body"></p>
+          <button id="retry-btn" class="btn-secondary">Retry</button>
+        </div>
+      </main>
+
+      <aside class="detail-panel" id="detail-panel">
+        <div class="detail-empty" id="detail-empty">
+          <p>Click any skill in the map to see its details, prerequisites, and courses.</p>
+        </div>
+        <div class="detail-content" id="detail-content" hidden></div>
+      </aside>
+
+    </div>
+
+    <div class="path-drawer" id="path-drawer" hidden>
+      <div class="path-drawer-header">
+        <h2 id="path-drawer-title">Your learning path</h2>
+        <button class="btn-icon" id="close-path-drawer" aria-label="Close">✕</button>
+      </div>
+      <div id="path-drawer-body" class="path-drawer-body"></div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
