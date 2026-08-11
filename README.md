@@ -8,11 +8,15 @@ A graph-powered learning-path planner that helps you answer three simple questio
 
 Skilltree uses a prerequisite graph to understand the relationship between skills and courses. Tell it what you already know, choose a target skill, and it calculates an ordered learning path to reach that target.
 
+---
+
 ## 🚀 Live Demo
 
-**[Open Skilltree](https://skilltree-f0u5.onrender.com)**
+[**Open Skilltree**](https://skilltree-f0u5.onrender.com/)
 
-> The application is deployed on Render and backed by CognoDB.
+The application is deployed on Render and backed by **CognoDB**, using the Neo4j Python driver and openCypher over Bolt.
+
+> **Note:** The free Render instance may take a few seconds to wake up after inactivity.
 
 ---
 
