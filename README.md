@@ -357,21 +357,7 @@ Secrets are not committed to the repository.
 
 ---
 
-## 📸 Screenshots
 
-### Interactive Skill Graph
-
-![Interactive Skill Graph](docs/screenshot-graph.png)
-
-### Personalized Learning Path
-
-![Personalized Learning Path](docs/screenshot-path.png)
-
-### Skill Details
-
-![Skill Details](docs/screenshot-detail.png)
-
----
 
 ## 🛡️ Error Handling
 
