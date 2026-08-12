@@ -1,20 +1,20 @@
-# 🌳 Skilltree
+# Skilltree 🌳
 
-A graph-powered learning-path planner that helps answer three simple questions:
+A graph-powered learning-path planner that helps you answer three simple questions:
 
 * **What should I learn next?**
 * **What do I need to learn before a target skill?**
 * **Which course should I take for each skill?**
 
-Skilltree uses a prerequisite graph to understand the relationships between skills and courses. Tell it what you already know, choose a target skill, and it calculates an ordered learning path to reach that target.
+Skilltree uses a prerequisite graph to understand the relationships between skills and courses. Tell it what you already know, choose a target skill, and it calculates an ordered learning path to help you reach that target.
 
 ---
 
 ## 🚀 Live Demo
 
-**Open Skilltree:** https://skilltree-f0u5.onrender.com/
+[**Open Skilltree**](https://skilltree-f0u5.onrender.com/)
 
-The application is deployed on Render and backed by **CognoDB**, using the Neo4j Python driver and openCypher over Bolt.
+Skilltree is deployed on Render and backed by **CognoDB**, using the Neo4j Python driver and openCypher over Bolt.
 
 > **Note:** The free Render instance may take a few seconds to wake up after inactivity.
 
@@ -28,14 +28,12 @@ Explore relationships between skills through an interactive graph.
 
 Each skill can be:
 
-* 🟢 **Known**
-* 🟡 **Ready to learn**
-* ⚫ **Locked**
-* 🔵 **Target**
+* 🟢 **Known** — a skill you already have
+* 🟡 **Ready to Learn** — all prerequisites are satisfied
+* ⚫ **Locked** — one or more prerequisites are missing
+* 🔵 **Target** — the skill you want to reach
 
 The graph makes prerequisite relationships visually understandable instead of presenting them as a flat course list.
-
----
 
 ### 2. Personalized Learning Path
 
@@ -43,369 +41,236 @@ Select a target skill and tell Skilltree what you already know.
 
 The application:
 
-1. Finds the prerequisite subgraph.
+1. Finds the prerequisite subgraph for the target.
 2. Removes skills you already know.
 3. Orders the remaining skills using topological sorting.
-4. Recommends a suitable course for each step.
+4. Recommends a suitable course for each learning step.
 
----
+This produces a personalized, dependency-aware learning path.
 
-### 3. "What Can I Learn Next?"
+### 3. What Can I Learn Next?
 
 Skilltree identifies skills whose prerequisites are already satisfied.
 
-For example:
+For example, if you already know:
 
-```
-Python Syntax
-      ↓
-Programming Basics
-      ↓
-Python Data Structures
-      ↓
-NumPy & Pandas
-      ↓
-Data Visualization
+```text
+Python → Data Structures
 ```
 
-This allows learners to see the skills that are immediately available instead of having to manually inspect the entire learning graph.
+and **Algorithms** requires Data Structures, Skilltree can identify **Algorithms** as ready to learn.
 
----
+This helps learners continuously discover their next possible skills without manually checking every prerequisite.
 
-### 4. Skill Details
+### 4. Course Recommendations
 
-Click any skill in the graph to see:
+Skilltree connects skills with courses so that each step of a learning path can include a practical course recommendation.
 
-* Description
-* Direct prerequisites
-* Skills it unlocks
-* Available courses
+Instead of simply telling you *what* to learn, Skilltree also helps answer *where to learn it*.
 
-This provides context around each skill and helps learners understand why a particular skill appears in their learning path.
+### 5. Graph-Based Prerequisite Reasoning
 
----
-
-## 🧠 Why a Graph Database?
-
-Prerequisite relationships are the core of Skilltree, and they do not have a fixed depth.
+The application models learning as a graph rather than a simple ordered list.
 
 For example:
 
-```
-Arithmetic
-    ↓
-Algebra
-    ↓
-Linear Algebra
-    ↓
-Probability & Statistics
-    ↓
-Machine Learning Basics
-    ↓
-Deep Learning
+```text
+Python
+   ↓
+Data Structures
+   ↓
+Algorithms
+   ↓
+Machine Learning
 ```
 
-A relational database can model these relationships, but multi-hop prerequisite traversal, prerequisite intersections, and dynamically finding newly available skills become more natural as graph queries.
-
-Skilltree uses **openCypher variable-length traversals** such as:
-
-```cypher
-MATCH (ancestor:Skill)-[:PREREQUISITE_OF*1..8]->(target:Skill {id: $id})
-```
-
-For finding skills that are immediately learnable:
-
-```cypher
-MATCH (s:Skill)
-WHERE NOT s.id IN $known
-  AND NOT EXISTS {
-        MATCH (p:Skill)-[:PREREQUISITE_OF]->(s)
-        WHERE NOT p.id IN $known
-      }
-```
-
-This makes the graph structure directly express the learning rules.
+This allows Skilltree to reason about dependencies and generate paths based on what a learner already knows.
 
 ---
 
-## 🗂️ Data Model
+## 🧠 How It Works
 
-### Nodes
+Skilltree represents skills and their prerequisites as a directed graph.
 
-#### Skill
-
-![Skilltree Graph Data Model](docs/data-model.png)
-
-The graph consists of Skill and Course nodes connected through PREREQUISITE_OF, TEACHES, and REQUIRES relationships.
+A simplified model looks like:
 
 ```text
-Skill {
-    id,
-    name,
-    category,
-    description
-}
+Skill ──requires──> Skill
+Skill ──has course──> Course
 ```
 
-The project contains **46 seeded skills** across:
+When a learner selects a target skill, Skilltree traverses the prerequisite graph to determine everything required to reach that target.
 
-* Mathematics
-* Programming Fundamentals
-* Web Development
-* Data Science
-* DevOps
-* Systems
+The resulting skills are then filtered against the learner's existing knowledge and sorted into a valid learning order.
 
-#### Course
+### Learning Path Algorithm
 
 ```text
-Course {
-    id,
-    title,
-    provider,
-    level,
-    duration_hours,
-    description
-}
-```
-
-The project contains **34 seeded courses**.
-
-### Relationships
-
-```text
-(:Skill)-[:PREREQUISITE_OF]->(:Skill)
-
-(:Course)-[:TEACHES]->(:Skill)
-
-(:Course)-[:REQUIRES]->(:Skill)
-```
-
-The prerequisite graph forms a **DAG (Directed Acyclic Graph)**.
-
----
-
-## 🔍 Backend Queries
-
-All Cypher queries are parameterized through the Neo4j Python driver.
-
-No user input is directly inserted into Cypher query strings.
-
-| Query                         | Purpose                                         |
-| ----------------------------- | ----------------------------------------------- |
-| `get_prerequisite_chain`      | Finds prerequisite skills at multiple depths    |
-| `get_frontier_skills`         | Finds skills that can be learned immediately    |
-| `get_missing_prereq_subgraph` | Finds skills still required before a target     |
-| `get_common_ancestors`        | Finds prerequisites shared by two target skills |
-| `get_best_course_for_skill`   | Finds a suitable course for a skill             |
-| `get_skill_detail`            | Gets prerequisites, dependents, and courses     |
-
-The graph query identifies the required subgraph, while `backend/pathing.py` performs a topological sort to produce the final ordered learning path.
-
----
-
-## 🏗️ Project Structure
-
-```text
-skilltree/
-│
-├── backend/
-│   ├── main.py
-│   ├── db.py
-│   ├── queries.py
-│   ├── pathing.py
-│   ├── seed_data.py
-│   ├── requirements.txt
-│   │
-│   └── data/
-│       ├── skills.json
-│       └── courses.json
-│
-├── frontend/
-│   ├── index.html
-│   ├── styles.css
-│   ├── app.js
-│   └── lib/
-│
-├── docs/
-│   ├── screenshot-graph.png
-│   ├── screenshot-path.png
-│   └── screenshot-detail.png
-│
-├── render.yaml
-├── Procfile
-├── .env.example
-├── .gitignore
-└── README.md
+Known Skills + Target Skill
+            ↓
+   Find Prerequisite Graph
+            ↓
+   Remove Known Skills
+            ↓
+   Topological Sort
+            ↓
+   Ordered Learning Path
+            ↓
+    Course Recommendations
 ```
 
 ---
 
-## ⚙️ Tech Stack
+## 🗄️ Database
 
-### Backend
+Skilltree uses **CognoDB** as its graph database layer.
 
-* Python
-* FastAPI
-* Uvicorn
-* Neo4j Python Driver
-* openCypher
-* CognoDB
+The application communicates with the database using:
 
-### Frontend
+* **Neo4j Python Driver**
+* **openCypher**
+* **Bolt**
 
-* HTML
-* CSS
-* JavaScript
-* vis-network
-
-### Deployment
-
-* Render
-* GitHub
+The graph database allows Skilltree to efficiently represent and query relationships between skills, prerequisites, and courses.
 
 ---
 
-## 🛠️ Local Setup
+## 🛠️ Tech Stack
 
-### 1. Clone the repository
+* **Python**
+* **Neo4j Python Driver**
+* **openCypher**
+* **Bolt**
+* **CognoDB**
+* **Render**
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Make sure you have Python installed on your system.
+
+### Clone the Repository
 
 ```bash
-git clone https://github.com/kshtiijbajpai99/skilltree.git
+git clone <repository-url>
 cd skilltree
 ```
 
-### 2. Configure environment variables
-
-Copy the example environment file:
+### Install Dependencies
 
 ```bash
-cp .env.example .env
-```
-
-Then configure:
-
-```env
-COGNODB_URI=bolt+s://<your-instance>.databases.cognodb.cloud
-COGNODB_USER=cognodb
-COGNODB_PASSWORD=<your-password>
-```
-
-### 3. Install dependencies
-
-```bash
-cd backend
 pip install -r requirements.txt
 ```
 
-### 4. Seed the graph
+### Configure Environment Variables
+
+Create a `.env` file and add the required database configuration:
+
+```env
+NEO4J_URI=<your-bolt-uri>
+NEO4J_USERNAME=<your-username>
+NEO4J_PASSWORD=<your-password>
+```
+
+Use the appropriate environment variable names required by your application.
+
+### Run Locally
+
+Start the application using the project's entry point.
+
+For example:
 
 ```bash
-python seed_data.py
+python app.py
 ```
 
-The seed operation is designed to be safe to run again.
+Then open the local URL shown in your terminal.
 
-### 5. Run the application
+---
 
-```bash
-uvicorn main:app --reload --port 8000
-```
-
-Open:
+## 📁 Project Structure
 
 ```text
-http://localhost:8000
+skilltree/
+├── app.py
+├── requirements.txt
+├── README.md
+├── .env
+└── ...
 ```
 
-The FastAPI application serves both the API and frontend from the same service.
+The exact structure may vary depending on the current implementation.
 
 ---
 
-## 🌐 API Endpoints
+## 🎯 Example
 
-| Endpoint                          | Purpose                           |
-| --------------------------------- | --------------------------------- |
-| `GET /api/health`                 | Health and graph counts           |
-| `GET /api/skills`                 | List available skills             |
-| `GET /api/graph`                  | Get the full skill graph          |
-| `GET /api/skill/{skill_id}`       | Get skill details                 |
-| `GET /api/skill/{skill_id}/chain` | Get prerequisite chain            |
-| `GET /api/next`                   | Find immediately learnable skills |
-| `GET /api/path`                   | Generate a learning path          |
-| `GET /api/common-ancestors`       | Find shared prerequisites         |
-
----
-
-## 🚀 Deployment
-
-The project includes a `render.yaml` Blueprint configuration.
-
-The deployed service uses:
+Suppose a learner already knows:
 
 ```text
-Root Directory: backend
-Build Command: pip install -r requirements.txt
-Start Command: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+Python
 ```
 
-The following values are configured as environment variables on Render:
+and wants to learn:
 
 ```text
-COGNODB_URI
-COGNODB_USER
-COGNODB_PASSWORD
+Machine Learning
 ```
 
-Secrets are not committed to the repository.
+Skilltree might determine that the learner needs to follow a path such as:
+
+```text
+Python
+  ↓
+Data Structures
+  ↓
+Algorithms
+  ↓
+Statistics
+  ↓
+Machine Learning
+```
+
+Because Python is already known, it is removed from the remaining learning path:
+
+```text
+1. Data Structures
+2. Algorithms
+3. Statistics
+4. Machine Learning
+```
+
+Skilltree can then associate courses with each step.
 
 ---
 
+## 🤝 Contributing
 
+Contributions, suggestions, and improvements are welcome.
 
-## 🛡️ Error Handling
-
-If CognoDB becomes unreachable or the credentials are invalid, the backend converts the database failure into a clean **503 Service Unavailable** response.
-
-The frontend displays a user-friendly error state with a **Retry** button instead of exposing a backend stack trace.
-
----
-
-## 🤖 AI-Assisted Development
-
-This project was developed with AI-assisted coding.
-
-The code, data model, graph queries, and application architecture were reviewed and can be explained and defended.
+1. Fork the repository.
+2. Create a new branch.
+3. Make your changes.
+4. Test your changes.
+5. Submit a pull request.
 
 ---
 
-## 🎯 Assignment Context
+## 📄 License
 
-Skilltree was built for the **Wexa AI take-home assignment**.
-
-The project demonstrates how a graph database can be used to solve prerequisite and learning-path problems involving multi-hop relationships and graph traversal.
+Add the project's license information here.
 
 ---
 
-## 📊 Project Statistics
+## 🌳 Why Skilltree?
 
-* **46 Skills**
-* **34 Courses**
-* **~55 Prerequisite relationships**
-* **~40 Course → Skill relationships**
-* **~55 Course → Requirement relationships**
+Traditional course platforms often show learners a list of courses and leave them to decide what to learn first.
 
----
+Skilltree takes a different approach:
 
-## 🔗 Links
+> **Learning is a graph, not a list.**
 
-* **Live Demo:** https://skilltree-f0u5.onrender.com/
-* **GitHub:** https://github.com/kshtiijbajpai99/skilltree
-
----
-
-## 👤 Author
-
-**Kshitij Bajpai**
-
-Built as a graph-powered learning-path planner using **FastAPI, JavaScript, CognoDB, and openCypher**.
+By understanding prerequisites and existing knowledge, Skilltree helps learners find a logical path from **what they know** to **what they want to learn**.
