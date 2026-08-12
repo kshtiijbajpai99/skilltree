@@ -795,9 +795,6 @@ The code is structured so that the project can be walked through and defended li
 
 **[Skilltree Live Demo](https://skilltree-f0u5.onrender.com/)**
 
-### Screen Recording
-
-**[Skilltree Demo Recording](screen-recording-link)**
 
 ---
 
