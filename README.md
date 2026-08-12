@@ -680,8 +680,7 @@ The URI and password should be configured through Render's environment-variable 
 ## 🎥 Short Screen Recording
 
 A short screen recording demonstrating the Skilltree application is available here:
-
-**[Watch the Skilltree Demo](screen-recording-link)**
+** a seprate link is provided in email **
 
 The recording demonstrates:
 
